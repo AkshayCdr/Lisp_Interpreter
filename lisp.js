@@ -3,7 +3,7 @@
 // import { numberParser } from "./jsonParser";
 
 function Env() {
-  const global_env = {
+  let global_env = {
     "+": function (a, b) {
       return a + b;
     },
@@ -29,10 +29,6 @@ function Env() {
     "<=": function (a, b) {
       return a <= b;
     },
-    // define: function (a, b) {
-    //   a = b;
-    //   return a;
-    // },
     define: function (variable, value) {
       global_env[variable] = value;
       return value;
@@ -58,16 +54,16 @@ function Env() {
     "equal?": function (a, b) {
       return a === b;
     },
-    car: function (a) {
-      return a[0];
-    },
-    cdr: function (a) {
-      return a[1];
-    },
-    cons: function (a, b) {
-      a.push(b);
-      return a;
-    },
+    // car: function (a) {
+    //   return a[0];
+    // },
+    // cdr: function (a) {
+    //   return a[1];
+    // },
+    // cons: function (a, b) {
+    //   a.push(b);
+    //   return a;
+    // },
     sqrt: function (a) {
       return Math.sqrt(a);
     },
@@ -89,6 +85,8 @@ function Env() {
     // begin: (...args) => {
     //   return args[args.length - 1];
     // },
+    begin: (...args) => args[args.length - 1],
+
     fact: function (a) {
       let answer = 1;
       if (a == 0 || a == 1) {
@@ -105,6 +103,8 @@ function Env() {
   };
   return global_env;
 }
+
+let env = new Env();
 
 function stringParser(string) {
   let i = 0;
@@ -131,11 +131,13 @@ function numberParser(input) {
 // let str = "(* pi 6)";
 // let str = "(define r 5)";
 // let str = "(define r 5)((* pi (* r r))))";
+// let str = "(begin (define r 10) (* pi (* r r)))";
+// let str = "(* (define r 5) (* r r))";
 
-console.log(parserFormatter(str));
+console.log(parserFormatter(str, env));
 // parser(str);
 
-function parserFormatter(string) {
+function parserFormatter(string, env) {
   if (!string.startsWith("(")) {
     return null;
   }
@@ -146,19 +148,33 @@ function parserFormatter(string) {
   // if (leftBracketArr !== righBrackerArr) {
   //   return null;
   // }
-  let result = parser(string);
+  let result = parser(string, env);
   //   console.log(result);
   return result[0];
 }
 
-function parser(string) {
-  let env = Env();
+function parser(string, env) {
+  // let env = Env();
   if (!string) return null;
   string = string.trim();
   if (string.startsWith("(")) {
     string = string.slice(1);
   }
   string = string.trim();
+
+  //temp code - change it
+  if (string.startsWith(")")) {
+    string = string.slice(1);
+  }
+  string = string.trim();
+  if (!string) {
+    return null;
+  }
+  if (string.startsWith("(")) {
+    string = string.slice(1);
+  }
+  string = string.trim();
+
   if (numberParser(string)) {
     let result = numberParser(string);
     return result;
@@ -167,9 +183,11 @@ function parser(string) {
     let result = stringParser(string);
     let fun = result[0];
     string = result[1];
+    // console.log(fun);
+    // console.log(Object.prototype.hasOwnProperty.call(env, fun));
     if (Object.prototype.hasOwnProperty.call(env, fun)) {
       if (fun === "define") {
-        let variable = parser(string);
+        let variable = parser(string, env);
         if (variable[1]) {
           string = variable[1];
         }
@@ -179,18 +197,20 @@ function parser(string) {
           string = string.trim();
         }
 
-        let value = parser(string);
+        let value = parser(string, env);
         if (value[1]) {
           string = value[1];
         }
         value = value[0] || value;
 
-        return [env.define(variable, value), string];
+        env.define(variable, value);
+
+        return [value, string];
       } else {
         for (let i in env) {
           if (i === fun) {
             if (typeof env[i] === "function") {
-              let arg1 = parser(string);
+              let arg1 = parser(string, env);
               if (arg1[1]) {
                 string = arg1[1];
               }
@@ -206,17 +226,18 @@ function parser(string) {
                 //hack change the code
                 if (i === "pi") {
                   return [env[i](), arg1.toString()];
-                } else {
+                } else if (env[i](arg1)) {
                   return [env[i](arg1), string];
                 }
               }
-              let arg2 = parser(string);
+              let arg2 = parser(string, env);
               if (arg2[1]) {
                 string = arg2[1];
               }
               arg2 = arg2[0] || arg2;
               return [env[i](arg1, arg2), string];
             }
+            return [env[i], string];
           }
         }
       }
