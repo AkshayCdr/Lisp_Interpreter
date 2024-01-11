@@ -67,11 +67,11 @@ function Env() {
     sqrt: function (a) {
       return Math.sqrt(a);
     },
-    max: function (a) {
-      return Math.max(a);
+    max: function (a, b) {
+      return Math.max(a, b);
     },
-    min: function (a) {
-      return Math.min(a);
+    min: function (a, b) {
+      return Math.min(a, b);
     },
     round: function (a) {
       return Math.round(a);
