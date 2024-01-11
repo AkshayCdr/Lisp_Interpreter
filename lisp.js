@@ -133,6 +133,8 @@ function numberParser(input) {
 // let str = "(define r 5)((* pi (* r r))))";
 // let str = "(begin (define r 10) (* pi (* r r)))";
 // let str = "(* (define r 5) (* r r))";
+// let str = "(- 11)";
+let str = "(if (> 50 100) 100 50) ";
 
 console.log(parserFormatter(str, env));
 // parser(str);
@@ -185,60 +187,86 @@ function parser(string, env) {
     string = result[1];
     // console.log(fun);
     // console.log(Object.prototype.hasOwnProperty.call(env, fun));
-    if (Object.prototype.hasOwnProperty.call(env, fun)) {
-      if (fun === "define") {
-        let variable = parser(string, env);
-        if (variable[1]) {
-          string = variable[1];
+
+    if (fun === "define") {
+      let variable = parser(string, env);
+      if (variable[1]) {
+        string = variable[1];
+      }
+      variable = variable[0] || variable;
+
+      if (string.trim()) {
+        string = string.trim();
+      }
+
+      let value = parser(string, env);
+      if (value[1]) {
+        string = value[1];
+      }
+      value = value[0] || value;
+
+      env.define(variable, value);
+
+      return [value, string];
+    } else if (fun === "if") {
+      //if function
+      //condition
+      //if is true then run arg1
+      //else run arg2
+      let condition = parser(string, env);
+      if (condition[1]) {
+        string = condition[1];
+      }
+      condition = condition[0] || condition;
+      string = string.trim();
+      if (condition) {
+        let arg1 = parser(string, env);
+        if (arg1[1]) {
+          string = arg1[1];
         }
-        variable = variable[0] || variable;
-
-        if (string.trim()) {
-          string = string.trim();
-        }
-
-        let value = parser(string, env);
-        if (value[1]) {
-          string = value[1];
-        }
-        value = value[0] || value;
-
-        env.define(variable, value);
-
-        return [value, string];
-      } else {
-        for (let i in env) {
-          if (i === fun) {
-            if (typeof env[i] === "function") {
-              let arg1 = parser(string, env);
-              if (arg1[1]) {
-                string = arg1[1];
-              }
-              arg1 = arg1[0] || arg1;
-
-              //check for white spaces
-
-              if (string.trim()) {
-                string = string.trim();
-              }
-
-              if (string.startsWith(")")) {
-                //hack change the code
-                if (i === "pi") {
-                  return [env[i](), arg1.toString()];
-                } else if (env[i](arg1)) {
-                  return [env[i](arg1), string];
-                }
-              }
-              let arg2 = parser(string, env);
-              if (arg2[1]) {
-                string = arg2[1];
-              }
-              arg2 = arg2[0] || arg2;
-              return [env[i](arg1, arg2), string];
+        let result = arg1[0] || arg1;
+        return result;
+      }
+      // else {
+      //     let arg2 = parser(string, env);
+      //   }
+      string = string.trim();
+    } else if (Object.prototype.hasOwnProperty.call(env, fun)) {
+      for (let i in env) {
+        if (i === fun) {
+          if (typeof env[i] === "function") {
+            let arg1 = parser(string, env);
+            if (arg1[1]) {
+              string = arg1[1];
             }
-            return [env[i], string];
+            arg1 = arg1[0] || arg1;
+
+            //check for white spaces
+
+            if (string.trim()) {
+              string = string.trim();
+            }
+
+            if (string.startsWith(")")) {
+              //hack change the code
+              if (i === "pi") {
+                return [env[i](), arg1.toString()];
+              } else if (i === "+") {
+                return [arg1, string];
+              } else if (i === "-") {
+                return [arg1 - arg1 * 2, string];
+              } else if (env[i](arg1)) {
+                return [env[i](arg1), string];
+              }
+            }
+            let arg2 = parser(string, env);
+            if (arg2[1]) {
+              string = arg2[1];
+            }
+            arg2 = arg2[0] || arg2;
+            return [env[i](arg1, arg2), string];
           }
+          return [env[i], string];
         }
       }
     } else {
@@ -246,3 +274,7 @@ function parser(string, env) {
     }
   }
 }
+
+//Notes
+
+// working calculator functions -- working define -- working on if function
