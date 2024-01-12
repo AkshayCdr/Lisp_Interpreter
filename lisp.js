@@ -125,6 +125,7 @@ function numberParser(input) {
 // let str = "(max 4(* 2 (* 3 4)))";
 // let str = "(6)";
 // let str = "(+ 1 2)";
+// let str = "(+ 1 2 3)";
 // let str = "(fact 5)";
 // let str = "(pow 2 16)";
 // let str = "(* pi (* 3 2)))";
@@ -132,9 +133,10 @@ function numberParser(input) {
 // let str = "(define r 5)";
 // let str = "(define r 5)((* pi (* r r))))";
 // let str = "(begin (define r 10) (* pi (* r r)))";
+let str = "(begin (define r 15) (define t 20) (* r t))";
 // let str = "(* (define r 5) (* r r))";
 // let str = "(- 11)";
-let str = "(if (> 50 100) 100 50) ";
+// let str = "(if (< 50 100) 100 50) ";
 
 console.log(parserFormatter(str, env));
 // parser(str);
@@ -208,6 +210,21 @@ function parser(string, env) {
       env.define(variable, value);
 
       return [value, string];
+    } else if (fun === "begin") {
+      //begin function
+      let result = null;
+      while (string.trim().startsWith("(")) {
+        let expressionResult = parser(string, env);
+        if (expressionResult[1]) {
+          string = expressionResult[1];
+        }
+        result = expressionResult[0];
+        //temp code change this code
+        if (string.startsWith(")")) {
+          string = string.slice(1);
+        }
+      }
+      return [result, string];
     } else if (fun === "if") {
       //if function
       //condition
@@ -217,20 +234,29 @@ function parser(string, env) {
       if (condition[1]) {
         string = condition[1];
       }
-      condition = condition[0] || condition;
+      condition = condition[0];
+      //   console.log(condition);
       string = string.trim();
-      if (condition) {
-        let arg1 = parser(string, env);
-        if (arg1[1]) {
-          string = arg1[1];
-        }
-        let result = arg1[0] || arg1;
-        return result;
+
+      //arg1
+      let arg1 = parser(string, env);
+      if (arg1[1]) {
+        string = arg1[1];
       }
-      // else {
-      //     let arg2 = parser(string, env);
-      //   }
-      string = string.trim();
+      let result1 = arg1[0] || arg1;
+
+      //arg2
+      let arg2 = parser(string, env);
+      if (arg2[1]) {
+        string = arg2[1];
+      }
+      let result2 = arg2[0] || arg2;
+
+      if (condition) {
+        return [result1, string];
+      } else {
+        return [result2, string];
+      }
     } else if (Object.prototype.hasOwnProperty.call(env, fun)) {
       for (let i in env) {
         if (i === fun) {
@@ -277,4 +303,5 @@ function parser(string, env) {
 
 //Notes
 
-// working calculator functions -- working define -- working on if function
+// working calculator functions -- working define -- if function temporarily worked
+// working on begin function and it temp worked
