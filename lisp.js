@@ -132,8 +132,8 @@ function numberParser(input) {
 // let str = "(* pi 6)";
 // let str = "(define r 5)";
 // let str = "(define r 5)((* pi (* r r))))";
-// let str = "(begin (define r 10) (* pi (* r r)))";
-let str = "(begin (define r 15) (define t 20) (* r t))";
+let str = "(begin (define r 10) (* pi (* r r)))";
+// let str = "(begin (define r 15) (define t 20) (* r t))";
 // let str = "(* (define r 5) (* r r))";
 // let str = "(- 11)";
 // let str = "(if (< 50 100) 100 50) ";
