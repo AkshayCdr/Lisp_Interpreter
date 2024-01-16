@@ -136,18 +136,32 @@ let env = new Env();
 // let str = "(define r 100)";
 // let str = "(begin (define r 10) (* r r))";
 // let str = "(begin (define r 10) (* pi (* r r)))";
-let str = "(if (> 5 10) (* 5 10) (* 5 100))";
+// let str = "(if (> 5 10) (* 5 10) (* 5 100))";
 // let str = "(if (> 5 10) 5 10)";
 
+// let str = "(define circle-area (lambda (r) (* 3.14 (* r r))))";
 // let str = "(define (abs x) (* x x))";
+// (define square (lambda (x y) (* x x y) ))
+// (square 9 10)function temp(env) {
+//   let string1 = "(define circle-area (lambda (r) (* 3.14 (* r r))))";
+//   let string2 = "(circle-area 5)";
 
+//   let result1 = parser(string1, env);
+//   let result2 = parser(string2, env);
+//   console.log(result1);
+//   console.log(result2);
+// }
+
+// temp(env);
+
+// let str = "(lambda (x y) (* x x y))";
 // const readline = require("readline").createInterface({
 //   input: process.stdin,
 //   output: process.stdout,
 // });
 
 // function formatter(env) {
-//   return readline.question("repl>>", (string) => {
+//   return readline.question("lisp>>", (string) => {
 //     console.log(parser(string, env)[0]);
 //     if (string === "exit") {
 //       readline.close();
@@ -159,18 +173,22 @@ let str = "(if (> 5 10) (* 5 10) (* 5 100))";
 
 // formatter(env);
 
-// function temp(env) {
-//   let string1 = "(define r 10)";
-//   let string2 = "(* r r)";
+function temp(env) {
+  //   let string1 = "(define circle-area (lambda (r) (* 3.14 (* r r))))";
+  //   let string2 = "(circle-area 5)";
 
-//   let result1 = parser(string1, env);
-//   let result2 = parser(string2, env);
-//   console.log(result1);
-//   console.log(result2);
-// }
+  let string1 =
+    "(define fact (lambda (n) (if (<= n 1) 1 (* n (fact (- n 1))))))";
+  let string2 = "(fact 2)";
 
-// temp(env);
-console.log(parser(str, env));
+  let result1 = parser(string1, env);
+  let result2 = parser(string2, env);
+  console.log(result1);
+  console.log(result2);
+}
+
+temp(env);
+// console.log(parser(str, env));
 
 function expressionParser(string, env) {
   string = string.trim();
@@ -271,8 +289,60 @@ function beginParser(string, env) {
   return [result, string];
 }
 
+function bodyParser(string, env) {
+  let i;
+  for (i = 0; i < string.length; i++) {
+    i++;
+  }
+  return [string.substring(0, i), string.slice(i)];
+}
+
 function lambdaParser(string, env) {
-  return 0;
+  //return function
+  //define the function into env
+  //how to parse the body of the function
+  //   (define circle-area (lambda (r) (* 3.14 (* r r))))
+  string = string.trim();
+  //args
+  let args = [];
+  while (!string.startsWith(")")) {
+    let result = parser(string, env);
+    if (result) {
+      args.push(result[0]);
+      string = result[1];
+    }
+  }
+  //remove )
+  if (string.startsWith(")")) {
+    string = string.slice(1);
+  }
+  string = string.trim();
+  //body
+  let body = bodyParser(string, env);
+
+  //function
+
+  let temp = (param) => {
+    // let lambdaEnv = new Env();
+    let i = 0;
+    while (i < args.length) {
+      //   lambdaEnv[args[i]] = param[i];
+      env[args[i]] = param[i];
+      i++;
+    }
+    // let result = parser(body[0], lambdaEnv);
+    let result = parser(body[0], env);
+    return [result[0], result[1]];
+  };
+  return [temp, body[0]];
+  //function (..args)
+  // lambdastringparser
+  //let lambda env = new env
+  //if start with (
+  //parser fun === env
+  //arg1 fun arg2
+  //return function
+  //
 }
 
 function ifParser(string, env) {
