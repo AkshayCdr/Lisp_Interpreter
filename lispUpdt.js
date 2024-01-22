@@ -1,7 +1,8 @@
 // import { valueParser } from "./jsonParser";
 
 // import { numberParser } from "./jsonParser";
-const { strings } = require("./lispTests");
+// const { strings } = require("./lispTests");
+const { tests } = require("./tests");
 
 function Env() {
   let global_env = {
@@ -84,7 +85,15 @@ function Env() {
     min: (args) => Math.min(...args),
     list: (...args) => args,
     car: (args) => args[0],
-    cdr: (args) => args.join("").slice(1).split(""),
+    // cdr: (args) => args.join("").slice(1).split(""),
+    cdr: (args) => args.shift(),
+    cons: (args) => {
+      if (args.length !== 2) {
+        return null;
+      }
+      const [a, ...b] = args;
+      return [a, ...b];
+    },
   };
   return global_env;
 }
@@ -100,7 +109,7 @@ let env = new Env();
 // let str = "(* pi 100)";
 // let str = "(define r 100)";
 // let str = "(begin (define r 10) (* r r))";
-let str = "(begin (define r 10) (* pi (* r r)))";
+// let str = "(begin (define r 10) (* pi (* r r)))";
 // let str = "(if (> 5 10) (* 5 10) (* 5 100))";
 // let str = "(if (> 5 10) 5 10)";
 // let str = "((if (> 5 4) + *) 4 3)";
@@ -122,8 +131,10 @@ let str = "(begin (define r 10) (* pi (* r r)))";
 // let str = "(define define 10)";
 // let str = "define";
 // let str = "()";
+// let str = ")";
 // let str = "(define first car)";
 // let str = "(list (1 2 3 4 5))";
+// let str = "(cons 1 2)";
 // let result1 = parser(string1, env);
 // let result2 = parser(string2, env);
 // console.log(result1);
@@ -133,21 +144,21 @@ let str = "(begin (define r 10) (* pi (* r r)))";
 // temp(env);
 
 // let str = "(lambda (x y) (* x x y))";
-// const readline = require("readline").createInterface({
-//   input: process.stdin,
-//   output: process.stdout,
-// });
+const readline = require("readline").createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
-// function formatter(env) {
-//   return readline.question("lisp>>", (string) => {
-//     console.log(parser(string, env)[0]);
-//     if (string === "exit") {
-//       readline.close();
-//     } else {
-//       formatter(env);
-//     }
-//   });
-// }
+function formatter(env) {
+  return readline.question("lisp>>", (string) => {
+    console.log(parser(string, env)[0]);
+    if (string === "exit") {
+      readline.close();
+    } else {
+      formatter(env);
+    }
+  });
+}
 
 // formatter(env);
 // e = require("readline").createInterface({
@@ -166,7 +177,7 @@ let str = "(begin (define r 10) (* pi (* r r)))";
 //   });
 // }
 
-// formatter(env);
+formatter(env);
 function temp(env) {
   //   let string1 = "(define circle-area (lambda (r) (* 3.14 (* r r))))";
   //   let string2 = "(circle-area 5)";
@@ -178,13 +189,14 @@ function temp(env) {
   //   let string1 = "(define reverse-subtract(lambda (x y) (- y x)))";
   //   let string2 = "(reverse-subtract 7 10)";
 
-  // let string1 = "(define twice (lambda (x) (* 2 x)))";
-  // let string2 = "(twice 5)";
-  // let string3 = "(define repeat (lambda (f) (lambda (x) (f (f x)))))";
-  // let string4 = "((repeat twice) 10)";
+  let string1 = "(define twice (lambda (x) (* 2 x)))";
+  let string2 = "(twice 5)";
+  let string3 = "(define repeat (lambda (f) (lambda (x) (f (f x)))))";
+  let string4 = "((repeat twice) 10)";
 
-  let string1 = "(define define 10)";
-  let string2 = "(define)";
+  // let string1 = "(define define 10)";
+  // let string2 = "define";
+
   //   let string3 = "(define twice (lambda (x) (* 2 x)))";
   //   let string4 = "(twice 5)";
 
@@ -195,12 +207,12 @@ function temp(env) {
   //   let string2 = "define";
   let result1 = parser(string1, env);
   let result2 = parser(string2, env);
-  // let result3 = parser(string3, env);
-  // let result4 = parser(string4, env);
+  let result3 = parser(string3, env);
+  let result4 = parser(string4, env);
   console.log(result1);
   console.log(result2);
-  // console.log(result3);
-  // console.log(result4);
+  console.log(result3);
+  console.log(result4);
 }
 
 // temp(env);
@@ -214,18 +226,43 @@ function temp(env) {
 
 // console.log(strings().map((i) => parser(i, env)));
 
-console.log(
-  strings().map((i) => {
-    return [i, parser(i, env)];
-  })
-);
+// console.log(
+//   strings().map((i) => {
+//     return [i, parser(i, env)];
+//   })
+// );
+function testCases() {
+  for (i of tests) {
+    let str = "";
+    str += "input is : ";
+    str += i["input"];
+    str += " expected ouput : ";
+    str += i["output"];
+    str += "\n";
+    str += " output is : ";
+    let result = parser(i["input"], env);
+    typeof result[0] === "function" ? (str += "function") : (str += result[0]);
+    //   str += parser(i["input"], env)[0];
+    str += "\n";
+    //   console.log(`input is :${i["input"]}`);
+    //   let testr = parser(i["input"], env);
+    //   console.log(`output is ${testr}`);
+    console.log(str);
+  }
+}
 
+// testCases();
 // --------------------------------------------------------------------
 function expressionParser(string, env) {
   string = string.trim();
   if (!string.startsWith("(")) {
     return null;
   }
+  string = string.trim();
+  if (string.slice(1).trim().startsWith(")")) {
+    return [string, ""];
+  }
+
   let fun;
   string = string.slice(1);
 
@@ -244,6 +281,7 @@ function expressionParser(string, env) {
     if (typeof fun === "function") {
       let params = [];
       while (!string.trim().startsWith(")")) {
+        string = string.trim();
         let result = parser(string, env);
         if (result) {
           params.push(result[0]);
@@ -276,6 +314,11 @@ function defineParser(string, env) {
   string = string.trim();
   string = string.slice(6);
   string = string.trim();
+
+  //define define 10 case
+  if (!string) {
+    return [env["define"], string];
+  }
   let result;
   //variable
   result = stringParser(string, env);
@@ -283,6 +326,7 @@ function defineParser(string, env) {
   string = result[1];
 
   string = string.trim();
+
   //value
   result = parser(string, env);
   let value = result[0];
@@ -291,8 +335,7 @@ function defineParser(string, env) {
   if (string.startsWith(")")) {
     string = string.slice(1);
   }
-  // env["define"](variable, value);
-  // env.variable = value;
+
   env[variable] = value;
   return [value, string];
 }
@@ -450,8 +493,8 @@ function ifParser(string, env) {
 function specialParser(string, env) {
   string = removeSpaceAndBracket(string);
 
-  let specialParsers = ["define", "begin", "if", "lambda"];
-  let parsers = [defineParser, beginParser, ifParser, lambdaParser];
+  const specialParsers = ["define", "begin", "if", "lambda"];
+  const parsers = [defineParser, beginParser, ifParser, lambdaParser];
 
   let containsSpecialKeyword = specialParsers.some((keyword) =>
     string.includes(keyword)
@@ -499,8 +542,8 @@ function numberParser(input) {
 }
 
 function valueParser(string, env) {
-  let result = stringParser(string);
-  let value = result[0];
+  const result = stringParser(string);
+  const value = result[0];
   string = result[1];
   if (Object.prototype.hasOwnProperty.call(env, value)) {
     return [env[value], string];
@@ -520,13 +563,9 @@ function booleanParser(input) {
   return null;
 }
 
+//function calling all parsers recurseively
 function parser(string, env) {
-  result = stringParser(string, env);
-  if (result) {
-    return result;
-  }
-
-  let parsers = [
+  const parsers = [
     specialParser,
     expressionParser,
     numberParser,
@@ -534,8 +573,8 @@ function parser(string, env) {
     valueParser,
     stringParser,
   ];
-  for (let i of parsers) {
-    let result = i(string, env);
+  for (const parserr of parsers) {
+    const result = parserr(string, env);
     if (result) {
       return result;
     }
