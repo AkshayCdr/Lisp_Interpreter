@@ -75,7 +75,7 @@ function specialParser(input, env) {
   const set = new Set(["define", "begin", "if", "lambda", "quote", "set!"]);
   if (!set.has(value)) return null;
   input = result[1];
-  let specialParsers = {
+  const specialParsers = {
     define: defineParser,
     begin: beginParser,
     if: ifParser,
@@ -85,7 +85,7 @@ function specialParser(input, env) {
   };
 
   const output = specialParsers[value](input, env);
-  if (result === null) return null;
+  if (output === null) return null;
   return [output[0], output[1]];
 }
 
@@ -168,9 +168,13 @@ function defineParser(input, env) {
   const value = result[0];
   input = result[1];
 
+  input = input.trim();
+
   if (input.startsWith(")")) {
     input = input.slice(1);
   }
+
+  input = input.trim();
 
   env[variable] = value;
   return [value, input];
@@ -187,6 +191,9 @@ function beginParser(input, env) {
     // string = string.slice(1);
     input = input.trim();
     temp = parser(input, env);
+    if (temp === null) {
+      return null;
+    }
     result = temp[0];
     input = temp[1];
     if (input.startsWith(")")) {
@@ -421,7 +428,7 @@ function stringParser(input) {
   }
   return [input.substring(1, i), input.slice(i + 1)];
 }
-
+//function calling all parsers recurseively
 function parser(input, env) {
   const result =
     expressionParser(input, env) ||
@@ -433,6 +440,18 @@ function parser(input, env) {
   return null;
 }
 
+// function main(input) {
+//   const env = new Env();
+//   while (input !== null && input !== ")" && input !== "") {
+//     const result = parser(input, env);
+//     const value = result[0];
+//     input = result[1];
+//     console.log(value, input);
+//   }
+
+//   //   while (result[1]) console.log(result);
+// }
+
 function main(input, env) {
   const output = [];
   //   const env = new Env();
@@ -441,11 +460,13 @@ function main(input, env) {
     if (result === null || result === undefined) break;
     const value = result[0];
     input = result[1];
+    // if (input === ")") return [value, { error: "syntax error extra ')'" }];
     if (input === ")") {
       output.push([value, { error: "syntax error extra ')'" }]);
       break;
     }
-
+    // console.log(value, input);
+    // return [value, input];
     output.push(value);
   }
   if (output.length < 1) return null;
