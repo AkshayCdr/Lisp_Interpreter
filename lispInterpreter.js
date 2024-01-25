@@ -278,9 +278,7 @@ function stringParser(input) {
         return null;
       }
       if (input[i + 1] === "u") {
-        if (!input.slice(i + 2).match(/^[0-9a-fA-F]{4}/)) {
-          return null;
-        }
+        if (!input.slice(i + 2).match(/^[0-9a-fA-F]{4}/)) return null;
         i += 5;
       } else {
         i += 2;
