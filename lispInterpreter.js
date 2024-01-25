@@ -1,50 +1,22 @@
 let globalEnv = {
   "+": (args) => args.reduce((acc, curr) => acc + curr, 0),
-  "-": (args) => args.reduce((acc, curr) => acc - curr),
+  "-": (args) => {
+    if (args.length === 1) return -args[0];
+    if (args.length === 0) return 0;
+    return args.reduce((acc, curr) => acc - curr);
+  },
   "*": (args) => args.reduce((acc, curr) => acc * curr, 1),
-  "/": (args) => {
-    let length = args.length;
-    if (length === 2) return args[0] / args[1];
-    return null;
-  },
-  ">": (args) => {
-    let length = args.length;
-    if (length === 2) return args[0] > args[1];
-    return null;
-  },
-  ">=": (args) => {
-    let length = args.length;
-    if (length === 2) return args[0] >= args[1];
-    return null;
-  },
-  "<": (args) => {
-    let length = args.length;
-    if (length === 2) return args[0] < args[1];
-    return null;
-  },
-  "<=": (args) => {
-    let length = args.length;
-    if (length === 2) return args[0] <= args[1];
-    return null;
-  },
+  "/": (args) => (args.length === 2 ? args[0] / args[1] : null),
+  ">": (args) => (args.length === 2 ? args[0] > args[1] : null),
+  ">=": (args) => (args.length === 2 ? args[0] >= args[1] : null),
+  "<": (args) => (args.length === 2 ? args[0] < args[1] : null),
+  "<=": (args) => (args.length === 2 ? args[0] <= args[1] : null),
+  "equal?": (args) => (args.length === 2 ? args[0] === args[1] : null),
   pi: Math.PI,
-  pow: (args) => {
-    if (args.length === 2) return Math.pow(args[0], args[1]);
-    return null;
-  },
+  pow: (args) => (args.length === 2 ? Math.pow(args[0], args[1]) : null),
   length: (args) => args.length,
-  abs: function (args) {
-    if (args.length === 1) return Math.abs(args[0]);
-    return null;
-  },
-  "equal?": function (args) {
-    if (args.length === 2) return args[0] === args[1];
-    return null;
-  },
-  sqrt: function (args) {
-    if (args.length === 1) return Math.sqrt(args[0]);
-    return null;
-  },
+  abs: (args) => (args.length === 1 ? Math.abs(args[0]) : null),
+  sqrt: (args) => (args.length === 1 ? Math.sqrt(args[0]) : null),
   max: (args) => Math.max(...args),
   min: (args) => Math.min(...args),
   list: (...args) => args,
@@ -61,12 +33,13 @@ let globalEnv = {
 
 function specialParser(input, env) {
   input = input.trim();
-  const result = tokenParser(input);
-  if (result === null) return null;
-  const value = result[0];
-  const set = new Set(["define", "begin", "if", "lambda", "quote", "set!"]);
-  if (!set.has(value)) return null;
-  input = result[1];
+  const [value, remainingInput] = tokenParser(input);
+  if (
+    value === null ||
+    !["define", "begin", "if", "lambda", "quote", "set!"].includes(value)
+  )
+    return null;
+
   const specialParsers = {
     define: defineParser,
     begin: beginParser,
@@ -75,93 +48,69 @@ function specialParser(input, env) {
     quote: quoteParser,
     "set!": setParser,
   };
-
-  const output = specialParsers[value](input, env);
-  if (output === null) return null;
-  return [output[0], output[1]];
+  const output = specialParsers[value](remainingInput, env);
+  return output !== null ? [output[0], output[1]] : null;
 }
 
 function expressionParser(input, env) {
   input = input.trim();
-  if (!input.startsWith("(")) {
-    return null;
-  }
-  input = input.slice(1);
-  input = input.trim();
+  if (!input.startsWith("(")) return null;
+
+  input = input.slice(1).trim();
 
   if (input.startsWith(")")) {
     input = input.slice(1);
     return ["()", input];
   }
 
-  let res = specialParser(input, env);
-  if (res !== null) {
-    return [res[0], res[1]];
-  }
+  const output = specialParser(input, env);
+  if (output !== null) return [output[0], output[1]];
 
   //get function
   let result = parser(input, env);
-  if (result === null) {
-    return null;
-  }
-  let functn;
-  functn = result[0];
+  if (result === null) return null;
+
+  const functn = result[0];
   input = result[1];
-  if (functn !== undefined || functn !== null) {
-    if (typeof functn === "function") {
-      const params = [];
-      while (!input.trim().startsWith(")")) {
-        input = input.trim();
-        const result = parser(input, env);
-        if (result) {
-          params.push(result[0]);
-          input = result[1];
-        }
-        input = input.trim();
+
+  if (typeof functn === "function") {
+    const params = [];
+    while (!input.trim().startsWith(")")) {
+      input = input.trim();
+      const result = parser(input, env);
+      if (result) {
+        params.push(result[0]);
+        input = result[1];
       }
-      if (input.startsWith(")")) {
-        input = input.slice(1);
-      }
-      const output = functn(params);
-      if (output || output === false || output === 0) {
-        if (output[0]) {
-          return [output[0], input];
-        }
-        return [output, input];
-      } else {
-        return null;
-      }
+      input = input.trim();
     }
-  } else {
-    return null;
+    if (input.startsWith(")")) input = input.slice(1).trim();
+
+    const output = functn(params);
+    if (output || output === false || output === 0) {
+      if (output[0]) {
+        return [output[0], input];
+      }
+      return [output, input];
+    } else {
+      return null;
+    }
   }
+  return null;
 }
 
 function defineParser(input, env) {
   input = input.trim();
-  // input = input.slice(6);
-  input = input.trim();
 
-  let result;
   //variable
-  result = tokenParser(input, env);
-  const variable = result[0];
-  input = result[1];
-
-  input = input.trim();
+  const [variable, remainingInput1] = tokenParser(input, env);
+  input = remainingInput1.trim();
 
   //value
-  result = parser(input, env);
-  const value = result[0];
-  input = result[1];
+  const [value, remainingInput2] = parser(input, env);
+  input = remainingInput2.trim();
 
-  input = input.trim();
-
-  if (input.startsWith(")")) {
-    input = input.slice(1);
-  }
-
-  input = input.trim();
+  if (input.startsWith(")")) input = input.slice(1).trim();
 
   env[variable] = value;
   return [value, input];
@@ -169,40 +118,26 @@ function defineParser(input, env) {
 
 function beginParser(input, env) {
   input = input.trim();
-  // input = input.slice(5);
-  input = input.trim();
-
-  let temp;
   let result;
   while (input.trim().startsWith("(")) {
-    // string = string.slice(1);
     input = input.trim();
-    temp = parser(input, env);
-    if (temp === null) {
-      return null;
-    }
+    const temp = parser(input, env);
+    if (temp === null) return null;
     result = temp[0];
     input = temp[1];
-    if (input.startsWith(")")) {
-      input = input.slice(1);
-      input = input.trim();
-    }
+    if (input.startsWith(")")) input = input.slice(1).trim();
   }
   return [result, input];
 }
 
 function bracketParser(input) {
   let i = 0;
-  let stack = [];
+  const stack = [];
   while (i < input.length) {
-    if (input[i] === "(") {
-      stack.push(input[i]);
-    }
+    if (input[i] === "(") stack.push(input[i]);
     if (input[i] === ")") {
-      let temp = stack.pop();
-      if (temp !== "(") {
-        break;
-      }
+      const temp = stack.pop();
+      if (temp !== "(") break;
     }
     i++;
   }
@@ -211,144 +146,87 @@ function bracketParser(input) {
 
 function lambdaParser(input, env) {
   input = input.trim();
-  // input = input.slice(6);
-  input = input.trim();
 
-  if (input.startsWith("(")) {
-    input = input.slice(1);
-  }
-  input = input.trim();
-
+  if (input.startsWith("(")) input = input.slice(1).trim();
   const args = [];
   //arguments
   while (!input.startsWith(")")) {
-    const result = tokenParser(input, env);
-    if (result) {
-      args.push(result[0]);
-      input = result[1];
-    }
+    const [result, remainingInput] = tokenParser(input, env) || [];
+    if (result) args.push(result);
+    input = remainingInput;
   }
-  //remove )
-  if (input.startsWith(")")) {
-    input = input.slice(1);
-  }
-  input = input.trim();
+  //remove ')' (args ')'
+  if (input.startsWith(")")) input = input.slice(1).trim();
   //body
-  const body = bracketParser(input, env);
+  const [body, remainingInput] = bracketParser(input, env) || [];
 
-  let innerFunction = (param) => {
+  const innerFunction = (param) => {
     const lambdaEnv = { ...env };
-    let i = 0;
-    while (i < args.length) {
-      lambdaEnv[args[i]] = param[i];
-      i++;
-    }
-    const result = parser(body[0], lambdaEnv);
-    return [result[0], result[1]];
+    args.forEach((args, index) => (lambdaEnv[args] = param[index]));
+    const [result, remainingInput] = parser(body, lambdaEnv) || [];
+    return [result, remainingInput];
   };
-  //temp code
-  env[innerFunction] = body[0];
-  input = body[1];
-  return [innerFunction, input];
+
+  env[innerFunction] = body;
+  return [innerFunction, remainingInput];
 }
 
-function ifStringParser(input) {
+function ifStringParserBracketParser(input) {
   let i = 0;
-  while (input[i] !== ")") {
-    i++;
-  }
+  while (input[i] !== ")") i++;
   return input.slice(i + 1);
 }
 
 function ifParser(input, env) {
   input = input.trim();
-  // input = input.slice(2);
-  input = input.trim();
-  const result = parser(input, env);
-  if (result[1]) {
-    input = result[1];
-  }
-  const condition = result[0];
-
-  // string = removeSpaceAndBracket(string);
-  input = input.trim();
+  const [condition, remainingInput] = parser(input, env) || [];
 
   if (condition) {
     //arg1
-    let res = parser(input, env);
-    input = res[1];
-    //arg2
-    input = input.trim();
-    if (input.startsWith("(")) {
-      input = ifStringParser(input);
+    const [result, remainingInput2] = parser(remainingInput.trim(), env) || [];
+    //arg2 - string
+    if (remainingInput2.trim().startsWith("(")) {
+      input = ifStringParserBracketParser(remainingInput2.trim());
     } else {
-      input = tokenParser(input)[1];
+      input = tokenParser(remainingInput2.trim())[1];
     }
-    if (input.startsWith(")")) {
-      input = input.slice(1);
-    }
-    input = input.trim();
-
-    return [res[0], input];
+    if (input.startsWith(")")) input = input.slice(1).trim();
+    return [result, input.trim()];
   } else {
-    input = input.trim();
-    if (input.startsWith(")")) {
-      input = input.slice(1);
-    }
-    input = input.trim();
-    //arg1
-    input = input.trim();
-    if (input.startsWith("(")) {
-      input = ifStringParser(input);
+    if (remainingInput.trim().startsWith("(")) {
+      input = ifStringParserBracketParser(remainingInput.trim());
     } else {
-      input = tokenParser(input)[1];
+      input = tokenParser(remainingInput.trim())[1];
     }
     input = input.trim();
     //arg2
-    let res = parser(input, env);
+    let [result, remainingInput2] = parser(input, env) || [];
 
-    input = res[1];
-    input = input.trim();
-
-    if (input.startsWith(")")) {
-      input = input.slice(1);
+    if (remainingInput2.trim().startsWith(")")) {
+      input = remainingInput2.trim().slice(1);
     }
-    input = input.trim();
 
-    return [res[0], input];
+    return [result, input.trim()];
   }
 }
 
 function quoteParser(input, env) {
   input = input.trim();
-  // input = input.slice(5);
-  input = input.trim();
   const result = bracketParser(input);
-  // return result;
   return [result[0], result[1]];
 }
 
 function setParser(input, env) {
   input = input.trim();
-  // input = input.slice(4);
-  input = input.trim();
   //variable
-  let result = tokenParser(input);
-  const variable = result[0];
-  if (!env.hasOwnProperty(variable)) {
-    return null;
-  }
-
-  input = result[1];
+  const [variable, remainingInput1] = tokenParser(input);
+  if (!env.hasOwnProperty(variable)) return null;
   //value
-  input = input.trim();
-  result = parser(input, env);
-  input = result[1];
-  const value = result[0];
+  const [value, remainingInput2] = parser(remainingInput1.trim(), env);
+  //assignment
   env[variable] = value;
-  if (input.startsWith(")")) {
-    input = input.slice(1);
-  }
+  input = remainingInput2.trim();
+  if (input.startsWith(")")) input = input.slice(1);
   return [value, input];
 }
 
