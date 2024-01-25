@@ -1,71 +1,63 @@
-function Env() {
-  let global_env = {
-    "+": (args) => args.reduce((acc, curr) => acc + curr, 0),
-    "-": (args) => {
-      let result = args[0];
-      if (args.length < 2) return -result;
-      for (let i = 1; i < args.length; i++) result -= args[i];
-      return result;
-    },
-    "*": (args) => args.reduce((acc, curr) => acc * curr, 1),
-    "/": (args) => {
-      let length = args.length;
-      if (length === 2) return args[0] / args[1];
-      return null;
-    },
-    ">": (args) => {
-      let length = args.length;
-      if (length === 2) return args[0] > args[1];
-      return null;
-    },
-    ">=": (args) => {
-      let length = args.length;
-      if (length === 2) return args[0] >= args[1];
-      return null;
-    },
-    "<": (args) => {
-      let length = args.length;
-      if (length === 2) return args[0] < args[1];
-      return null;
-    },
-    "<=": (args) => {
-      let length = args.length;
-      if (length === 2) return args[0] <= args[1];
-      return null;
-    },
-    pi: Math.PI,
-    pow: (args) => {
-      if (args.length === 2) return Math.pow(args[0], args[1]);
-      return null;
-    },
-    length: (args) => args.length,
-    abs: function (args) {
-      if (args.length === 1) return Math.abs(args[0]);
-      return null;
-    },
-    "equal?": function (args) {
-      if (args.length === 2) return args[0] === args[1];
-      return null;
-    },
-    sqrt: function (args) {
-      if (args.length === 1) return Math.sqrt(args[0]);
-      return null;
-    },
-    max: (args) => Math.max(...args),
-    min: (args) => Math.min(...args),
-    list: (...args) => args,
-    car: (args) => args[0],
-    // cdr: (args) => args.join("").slice(1).split(""),
-    cdr: (args) => args.slice(1),
-    cons: (args) => {
-      if (args.length !== 2) return null;
-      const [a, ...b] = args;
-      return [a, ...b];
-    },
-    // map: (args) => {},
-  };
-  return global_env;
-}
+let globalEnv = {
+  "+": (args) => args.reduce((acc, curr) => acc + curr, 0),
+  "-": (args) => args.reduce((acc, curr) => acc - curr),
+  "*": (args) => args.reduce((acc, curr) => acc * curr, 1),
+  "/": (args) => {
+    let length = args.length;
+    if (length === 2) return args[0] / args[1];
+    return null;
+  },
+  ">": (args) => {
+    let length = args.length;
+    if (length === 2) return args[0] > args[1];
+    return null;
+  },
+  ">=": (args) => {
+    let length = args.length;
+    if (length === 2) return args[0] >= args[1];
+    return null;
+  },
+  "<": (args) => {
+    let length = args.length;
+    if (length === 2) return args[0] < args[1];
+    return null;
+  },
+  "<=": (args) => {
+    let length = args.length;
+    if (length === 2) return args[0] <= args[1];
+    return null;
+  },
+  pi: Math.PI,
+  pow: (args) => {
+    if (args.length === 2) return Math.pow(args[0], args[1]);
+    return null;
+  },
+  length: (args) => args.length,
+  abs: function (args) {
+    if (args.length === 1) return Math.abs(args[0]);
+    return null;
+  },
+  "equal?": function (args) {
+    if (args.length === 2) return args[0] === args[1];
+    return null;
+  },
+  sqrt: function (args) {
+    if (args.length === 1) return Math.sqrt(args[0]);
+    return null;
+  },
+  max: (args) => Math.max(...args),
+  min: (args) => Math.min(...args),
+  list: (...args) => args,
+  car: (args) => args[0],
+  // cdr: (args) => args.join("").slice(1).split(""),
+  cdr: (args) => args.slice(1),
+  cons: (args) => {
+    if (args.length !== 2) return null;
+    const [a, ...b] = args;
+    return [a, ...b];
+  },
+  // map: (args) => {},
+};
 
 function specialParser(input, env) {
   input = input.trim();
@@ -94,18 +86,12 @@ function expressionParser(input, env) {
   if (!input.startsWith("(")) {
     return null;
   }
-  if (input.slice(1).trim().startsWith(")")) {
-    input = input.slice(1).trim().slice(1);
-    return ["()", input];
-  }
-  input = input.trim();
-
-  let functn;
   input = input.slice(1);
   input = input.trim();
 
   if (input.startsWith(")")) {
-    return [input, input.slice(1)];
+    input = input.slice(1);
+    return ["()", input];
   }
 
   let res = specialParser(input, env);
@@ -118,6 +104,7 @@ function expressionParser(input, env) {
   if (result === null) {
     return null;
   }
+  let functn;
   functn = result[0];
   input = result[1];
   if (functn !== undefined || functn !== null) {
@@ -382,7 +369,6 @@ function tokenParser(input) {
 }
 
 function numberParser(input) {
-  //   let regex = /^[-+]?([1-9]\d*|0)(\.\d*)?([Ee][+-]?\d+)?/;
   const regex = /^([1-9]\d*|0)(\.\d*)?([Ee][+-]?\d+)?/;
   const result = input.match(regex);
   if (result) return [parseFloat(result[0]), input.slice(result[0].length)];
@@ -395,7 +381,6 @@ function valueParser(input, env) {
   input = result[1];
   if (Object.prototype.hasOwnProperty.call(env, value))
     return [env[value], input];
-  //   return [value, input];
   return null;
 }
 
@@ -440,18 +425,6 @@ function parser(input, env) {
   return null;
 }
 
-// function main(input) {
-//   const env = new Env();
-//   while (input !== null && input !== ")" && input !== "") {
-//     const result = parser(input, env);
-//     const value = result[0];
-//     input = result[1];
-//     console.log(value, input);
-//   }
-
-//   //   while (result[1]) console.log(result);
-// }
-
 function main(input, env) {
   const output = [];
   //   const env = new Env();
@@ -460,24 +433,18 @@ function main(input, env) {
     if (result === null || result === undefined) break;
     const value = result[0];
     input = result[1];
-    // if (input === ")") return [value, { error: "syntax error extra ')'" }];
     if (input === ")") {
       output.push([value, { error: "syntax error extra ')'" }]);
       break;
     }
-    // console.log(value, input);
-    // return [value, input];
     output.push(value);
   }
   if (output.length < 1) return null;
   return output;
-
-  //   while (result[1]) console.log(result);
 }
-// main("(+ 4 5)(+ 5 6)");
 
 module.exports = {
   parser,
-  Env,
+  globalEnv,
   main,
 };
