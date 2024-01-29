@@ -1,6 +1,5 @@
 const { main } = require("./lispClean");
-const { Env } = require("./lispClean");
-// const env = new Env();
+const { globalEnv } = require("./lispClean");
 
 const readline = require("readline").createInterface({
   input: process.stdin,
@@ -26,7 +25,7 @@ function formatter(env) {
   });
 }
 
-// formatter(env);
+// formatter(globalEnv);
 
 module.exports = {
   formatter,

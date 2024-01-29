@@ -215,7 +215,7 @@ const tests = [
   },
   {
     input: "(",
-    output: "",
+    output: null,
   },
   {
     input: "(list 1 2 3 4 5 )",
@@ -284,7 +284,7 @@ const tests = [
 
   {
     input: "(-1)",
-    output: "",
+    output: null,
   },
 
   {
@@ -309,6 +309,59 @@ const tests = [
   {
     input: "(+ 3 4)(* 2 3)",
     output: [7, 6],
+  },
+  {
+    input: "()(* 2 3)",
+    output: ["()", 6],
+  },
+  {
+    input: "((if (< 5 4) + -) (+ 45 3)) (- 45 3))",
+    output: [-48, [42, { error: "syntax error extra ')'" }]],
+  },
+  {
+    input: "defined 4",
+    output: null,
+  },
+  {
+    input: "(quote (a b c)))",
+    output: ["(a b c)", { error: "syntax error extra ')'" }],
+  },
+  {
+    input: '"this is a string"',
+    output: "this is a string",
+  },
+  {
+    input: '(define a "kjk")',
+    output: "kjk",
+  },
+  {
+    input: "(quote (+ 1 1)))",
+    output: "(+ 1 1)",
+  },
+  {
+    input: "(begin (define x 2 ) (+ x 1) (set! x 4) (+ x 1))",
+    output: 5,
+  },
+  {
+    input: "(begin (define area (lambda (l b) (* l b))) (area 2 3))",
+    output: 6,
+  },
+  {
+    input:
+      "(begin (define circle-area (lambda (r) (* pi (* r r)))) (circle-area 10))",
+    output: Math.PI * 100,
+  },
+  {
+    input: "(define x (+ 5 5))",
+    output: 10,
+  },
+  {
+    input: "( + ( + ( + 9 ( + 2 2)) 2) ( - 3 4) )",
+    output: 14,
+  },
+  {
+    input: "(begin (define r 1 ) (set! s 2))",
+    output: null,
   },
 ];
 

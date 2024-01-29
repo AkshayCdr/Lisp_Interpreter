@@ -26,7 +26,11 @@ let globalEnv = {
 
 function specialParser(input, env) {
   const [value, remainingInput] = operandParser(input.trim());
-  if (value === null || !["define", "begin", "if", "lambda", "quote", "set!"].includes(value) ) return null;
+  if (
+    value === null ||
+    !["define", "begin", "if", "lambda", "quote", "set!"].includes(value)
+  )
+    return null;
 
   const specialParsers = {
     define: defineParser,
@@ -68,7 +72,9 @@ function expressionParser(input, env) {
 
     const output = functn(params);
 
-    return output || output === false || output === 0 ? [output[0] || output, input]  : null;
+    return output || output === false || output === 0
+      ? [output[0] || output, input]
+      : null;
   }
   return null;
 }
@@ -191,7 +197,14 @@ function setParser(input, env) {
 
 function operandParser(input) {
   let i = 0;
-  while ( input[i] !== " " && i < input.length && input[i] !== ")" && input[i] !== "(") { i++;}
+  while (
+    input[i] !== " " &&
+    i < input.length &&
+    input[i] !== ")" &&
+    input[i] !== "("
+  ) {
+    i++;
+  }
   if (input[i] === ")" || input[i] === "(")
     return [input.substring(0, i), input.slice(i)];
 
@@ -224,7 +237,9 @@ function stringParser(input) {
   let i = 1;
   while (input[i] !== '"') {
     if (input[i] === "\\") {
-      if (!["b", "f", "n", "r", "t", "\\", "/", '"', "u"].includes(input[i + 1])) {
+      if (
+        !["b", "f", "n", "r", "t", "\\", "/", '"', "u"].includes(input[i + 1])
+      ) {
         return null;
       }
       if (input[i + 1] === "u") {
@@ -239,7 +254,7 @@ function stringParser(input) {
   }
   return [input.substring(1, i), input.slice(i + 1)];
 }
-//function calling all parsers recurseively
+
 function parser(input, env) {
   const result =
     expressionParser(input, env) ||

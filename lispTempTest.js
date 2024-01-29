@@ -1,6 +1,5 @@
 const { main } = require("./lispClean");
-const { Env } = require("./lispClean");
-const env = new Env();
+const { globalEnv } = require("./lispClean");
 
 function temp(env) {
   //   let string1 = "(define circle-area (lambda (r) (* 3.14 (* r r))))";
@@ -26,15 +25,18 @@ function temp(env) {
   //   let string1 = "(define reverse-subtract(lambda (x y) (- y x)))";
   //   let string2 = "(reverse-subtract 7 10)";
 
-  //   let string1 = "(quote (a b c))";
+  let string =
+    "(begin (define twice (lambda (x) (* 2 x))) (define repeat (lambda (f) (lambda (x) (f (f x))))) ((repeat twice) 10))";
   let string1 = "(define twice (lambda (x) (* 2 x)))";
   let string2 = "(twice 5)";
   let string3 = "(define repeat (lambda (f) (lambda (x) (f (f x)))))";
   let string4 = "((repeat twice) 10)";
   let string5 = "((repeat (repeat twice)) 10)";
-  let string6 = " ((repeat (repeat (repeat twice))) 10)";
-  let string7 = "(quote #(a b c))";
-  let string9 = "(quote (a b)))";
+  let string6 =
+    "(define fact (lambda (n) (if (<= n 1) 1 (* n (fact (- n 1))))))";
+  let string7 = "(fact 10)";
+  let string8 = "(";
+  let string9 = "(/ 4 5 6 )";
 
   //   let string1 = "(define a 5)";
   //   let string2 = "(set! a 8)";
@@ -59,7 +61,7 @@ function temp(env) {
   //   let string2 = "(cdr lst)";
   //   let string1 = "(define define 10)";
   //   let string2 = "define";
-  //   let result = parser(string, env);
+  let result = main(string, env);
   let result1 = main(string1, env);
   let result2 = main(string2, env);
   let result3 = main(string3, env);
@@ -67,9 +69,10 @@ function temp(env) {
   let result5 = main(string5, env);
   let result6 = main(string6, env);
   let result7 = main(string7, env);
+  let result8 = main(string8, env);
   let result9 = main(string9, env);
 
-  //   console.log(result);
+  console.log(result);
   console.log(result1);
   console.log(result2);
   console.log(result3);
@@ -77,10 +80,11 @@ function temp(env) {
   console.log(result5);
   console.log(result6);
   console.log(result7);
+  console.log(result8);
   console.log(result9);
 }
 
-// temp(env);
+// temp(globalEnv);
 
 module.exports = {
   temp,
