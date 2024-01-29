@@ -22,16 +22,24 @@ let globalEnv = {
   list: (...args) => args,
   car: (args) => args[0],
   cdr: (args) => args.slice(1),
-  // map: (args) => {},
 };
 
 function specialParser(input, env) {
-  input = input.trim();
-  const [value, remainingInput] = operandParser(input);
-  if (value === null || !["define", "begin", "if", "lambda", "quote", "set!"].includes(value))
+  const [value, remainingInput] = operandParser(input.trim());
+  if (
+    value === null ||
+    !["define", "begin", "if", "lambda", "quote", "set!"].includes(value)
+  )
     return null;
 
-  const specialParsers = {define: defineParser,begin: beginParser,if: ifParser,lambda: lambdaParser,quote: quoteParser, "set!": setParser };
+  const specialParsers = {
+    define: defineParser,
+    begin: beginParser,
+    if: ifParser,
+    lambda: lambdaParser,
+    quote: quoteParser,
+    "set!": setParser,
+  };
   const output = specialParsers[value](remainingInput, env);
   return output !== null ? output : null;
 }
@@ -64,7 +72,9 @@ function expressionParser(input, env) {
 
     const output = functn(params);
 
-    return output || output === false || output === 0 ? [output[0] || output, input] : null; 
+    return output || output === false || output === 0
+      ? [output[0] || output, input]
+      : null;
   }
   return null;
 }
@@ -134,9 +144,8 @@ function lambdaParser(input, env) {
 }
 
 function ifStringParserBracketParser(input) {
-  let i = 0;
-  while (input[i] !== ")") i++;
-  return input.slice(i + 1);
+  if (input.startsWith(")")) return input.slice(1);
+  return ifStringParserBracketParser(input.slice(1));
 }
 
 function ifParser(input, env) {
@@ -188,7 +197,14 @@ function setParser(input, env) {
 
 function operandParser(input) {
   let i = 0;
-  while (input[i] !== " " && i < input.length && input[i] !== ")" && input[i] !== "(" ) { i++; }
+  while (
+    input[i] !== " " &&
+    i < input.length &&
+    input[i] !== ")" &&
+    input[i] !== "("
+  ) {
+    i++;
+  }
   if (input[i] === ")" || input[i] === "(")
     return [input.substring(0, i), input.slice(i)];
 
@@ -221,7 +237,11 @@ function stringParser(input) {
   let i = 1;
   while (input[i] !== '"') {
     if (input[i] === "\\") {
-      if ( !["b", "f", "n", "r", "t", "\\", "/", '"', "u"].includes(input[i + 1])) { return null; }
+      if (
+        !["b", "f", "n", "r", "t", "\\", "/", '"', "u"].includes(input[i + 1])
+      ) {
+        return null;
+      }
       if (input[i + 1] === "u") {
         if (!input.slice(i + 2).match(/^[0-9a-fA-F]{4}/)) return null;
         i += 5;
